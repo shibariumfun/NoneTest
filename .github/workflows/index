@@ -16,11 +16,8 @@
         .button-group { display: flex; justify-content: center; flex-wrap: wrap; gap: 15px; }
         button { background-color: #ffffff; color: #ff9100; border: none; padding: 15px 30px; margin: 5px; border-radius: 12px; cursor: pointer; font-size: 1.2em; font-weight: bold; transition: all 0.3s ease; box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); min-width: 200px; touch-action: manipulation; }
         button:hover { background-color: #ffcc80; transform: translateY(-2px); box-shadow: 0 8px 15px rgba(0, 0, 0, 0.4); }
-        button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
         #connectButton { background-color: #ff9100; color: #ffffff; font-weight: bold; min-width: 250px; }
         #connectButton:hover { background-color: #e68a00; }
-        #copyReferralButton { background-color: #ff9100; color: #ffffff; padding: 10px 20px; font-size: 1em; min-width: 0; }
-        #copyReferralButton:hover { background-color: #e68a00; }
         .input-group { margin: 20px 0; display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 10px; }
         input { padding: 12px; border: none; border-radius: 8px; margin: 5px; background-color: #444444; color: #ffffff; font-size: 1.1em; width: 250px; box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.3); touch-action: manipulation; }
         input:focus { outline: none; box-shadow: inset 0 0 10px #ffffff, 0 0 5px #ff9100; }
@@ -35,9 +32,6 @@
         .percentage-buttons { display: flex; justify-content: center; gap: 10px; margin: 10px 0; }
         .percentage-btn { background-color: #ff9100; color: #ffffff; padding: 8px 15px; font-size: 1em; min-width: 0; }
         .percentage-btn:hover { background-color: #e68a00; }
-        #refreshButton { position: fixed; top: 50%; right: 20px; transform: translateY(-50%); background-color: #ff9100; color: #ffffff; padding: 15px; border-radius: 50%; font-size: 1em; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; z-index: 1000; }
-        #refreshButton:hover { background-color: #e68a00; }
-        #referralLink { color: #ffcc80; word-break: break-all; }
         @media (max-width: 600px) {
             body { align-items: flex-start; padding-top: 10px; }
             .container { width: 100%; padding: 15px; margin: 0; border-radius: 0; min-height: 90vh; box-shadow: none; }
@@ -51,8 +45,6 @@
             .intro-item { padding: 6px; margin: 6px 0; }
             .referral-path { font-size: 0.75em; }
             .percentage-btn { padding: 6px 10px; font-size: 0.9em; }
-            #refreshButton { right: 10px; width: 50px; height: 50px; padding: 10px; }
-            #copyReferralButton { padding: 8px 15px; }
         }
         @media (min-width: 601px) and (max-width: 900px) {
             .container { padding: 30px; }
@@ -142,7 +134,6 @@
             <div id="contractStats"></div>
         </div>
     </div>
-    <button id="refreshButton">Refresh</button>
     <footer>Powered by Shibarium Memecoin © 2025</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/web3@1.7.0/dist/web3.min.js"></script>
@@ -157,7 +148,7 @@
             const connectButton = document.getElementById('connectButton');
             try {
                 if (!window.ethereum) throw new Error("No wallet detected. Install MetaMask.");
-                connectButton.disabled = true;
+                connectButton.classList.add('loading');
                 status.innerText = "Connecting...";
                 web3 = new Web3(window.ethereum);
                 accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
@@ -168,10 +159,11 @@
                 contract = new web3.eth.Contract(contractABI, contractAddress);
                 status.innerText = "Connected to Shibarium Puppynet";
                 updateUI();
+                setupEventListeners();
             } catch (error) {
                 status.innerText = "Failed to connect: " + error.message;
             } finally {
-                connectButton.disabled = false;
+                connectButton.classList.remove('loading');
             }
         }
 
@@ -187,12 +179,8 @@
             }
         }
 
-        async function refreshAllData() {
-            if (!web3 || !contract || !accounts) return alert("Please connect MetaMask first!");
-            updateUI();
-        }
-
         async function updateUI() {
+            if (!web3 || !contract || !accounts) return;
             updateJoinSection();
             updateNodeSection();
             updateNoneBalance();
@@ -206,10 +194,8 @@
                 joinSection.innerHTML = `
                     <div class="section-title">Invite to Join</div>
                     <div class="intro-item">Whitelist User - You have already joined the network.</div>
-                    <div class="info-item">Your Referral Link: <span id="referralLink">${window.location.href}?ref=${accounts[0]}</span> <button id="copyReferralButton">Copy Link</button></div>
                     <div id="inviteInfo"></div>
                 `;
-                document.getElementById('copyReferralButton').addEventListener('click', copyReferralLink);
             } else {
                 joinSection.innerHTML = `
                     <div class="section-title">Invite to Join</div>
@@ -222,9 +208,8 @@
                     </div>
                     <div id="inviteInfo"></div>
                 `;
-                const joinButton = document.getElementById('joinWithReferrerButton');
-                joinButton.removeEventListener('click', joinWithReferrer);
-                joinButton.addEventListener('click', joinWithReferrer);
+                document.getElementById('joinWithReferrerButton').removeEventListener('click', joinWithReferrer);
+                document.getElementById('joinWithReferrerButton').addEventListener('click', joinWithReferrer);
             }
         }
 
@@ -255,53 +240,38 @@
                     </div>
                     <div id="nodeInfo"></div>
                 `;
-                const nodeButton = document.getElementById('becomeNodeButton');
-                nodeButton.removeEventListener('click', becomeNode);
-                nodeButton.addEventListener('click', becomeNode);
+                document.getElementById('becomeNodeButton').removeEventListener('click', becomeNode);
+                document.getElementById('becomeNodeButton').addEventListener('click', becomeNode);
             }
         }
 
         async function joinWithReferrer() {
             if (!web3 || !contract || !accounts) return alert("Please connect MetaMask first!");
             const referrer = document.getElementById("referrerInput").value;
-            const joinButton = document.getElementById("joinWithReferrerButton");
+            if (!referrer) return alert("Referrer address is required!");
             const inviteInfo = document.getElementById("inviteInfo");
-            if (!web3.utils.isAddress(referrer)) {
-                inviteInfo.innerHTML = `<div class="info-item">Invalid referrer address!</div>`;
-                inviteInfo.style.display = "block";
-                return;
-            }
             try {
-                joinButton.disabled = true;
                 inviteInfo.innerHTML = `<div class="info-item">Processing payment...</div>`;
                 inviteInfo.style.display = "block";
-                const tx = await contract.methods.joinWithReferrer(referrer).send({ from: accounts[0], value: web3.utils.toWei("10", "ether") });
-                await web3.eth.getTransactionReceipt(tx.transactionHash);
-                inviteInfo.innerHTML = `<div class="info-item">Joined successfully! Share your referral link to earn bonuses.</div>`;
+                await contract.methods.joinWithReferrer(referrer).send({ from: accounts[0], value: web3.utils.toWei("10", "ether") });
+                inviteInfo.innerHTML = `<div class="info-item">Joined successfully! You can now earn NONE rewards and invite others for BONE bonuses.</div>`;
                 updateUI();
             } catch (error) {
                 inviteInfo.innerHTML = `<div class="info-item">Failed: ${error.message}</div>`;
-            } finally {
-                joinButton.disabled = false;
             }
         }
 
         async function becomeNode() {
             if (!web3 || !contract || !accounts) return alert("Please connect MetaMask first!");
-            const nodeButton = document.getElementById("becomeNodeButton");
             const nodeInfo = document.getElementById("nodeInfo");
             try {
-                nodeButton.disabled = true;
                 nodeInfo.innerHTML = `<div class="info-item">Processing payment...</div>`;
                 nodeInfo.style.display = "block";
-                const tx = await contract.methods.becomeNode().send({ from: accounts[0], value: web3.utils.toWei("1000", "ether") });
-                await web3.eth.getTransactionReceipt(tx.transactionHash);
+                await contract.methods.becomeNode().send({ from: accounts[0], value: web3.utils.toWei("1000", "ether") });
                 nodeInfo.innerHTML = `<div class="info-item">You're now a node! Earn 10% of stakers' rewards.</div>`;
                 updateUI();
             } catch (error) {
                 nodeInfo.innerHTML = `<div class="info-item">Failed: ${error.message}</div>`;
-            } finally {
-                nodeButton.disabled = false;
             }
         }
 
@@ -326,10 +296,8 @@
             if (!web3 || !contract || !accounts) return alert("Please connect MetaMask first!");
             const nodeId = document.getElementById("nodeIdInput").value;
             const amount = document.getElementById("stakeAmountInput").value;
-            const stakeButton = document.getElementById("stakeButton");
             const nodeStakeInfo = document.getElementById("nodeStakeInfo");
             try {
-                stakeButton.disabled = true;
                 await contract.methods.stakeToNode(nodeId, web3.utils.toWei(amount, "ether")).send({ from: accounts[0] });
                 nodeStakeInfo.innerHTML = `<div class="info-item">Staked ${amount} NONE to Node ${nodeId}! Earn staking rewards now.</div>`;
                 nodeStakeInfo.style.display = "block";
@@ -337,17 +305,13 @@
             } catch (error) {
                 nodeStakeInfo.innerHTML = `<div class="info-item">Failed: ${error.message}</div>`;
                 nodeStakeInfo.style.display = "block";
-            } finally {
-                stakeButton.disabled = false;
             }
         }
 
         async function withdrawStake() {
             if (!web3 || !contract || !accounts) return alert("Please connect MetaMask first!");
-            const withdrawButton = document.getElementById("withdrawStakeButton");
             const nodeStakeInfo = document.getElementById("nodeStakeInfo");
             try {
-                withdrawButton.disabled = true;
                 await contract.methods.withdrawStake().send({ from: accounts[0] });
                 nodeStakeInfo.innerHTML = `<div class="info-item">Stake withdrawn successfully with rewards!</div>`;
                 nodeStakeInfo.style.display = "block";
@@ -355,8 +319,6 @@
             } catch (error) {
                 nodeStakeInfo.innerHTML = `<div class="info-item">Failed: ${error.message}</div>`;
                 nodeStakeInfo.style.display = "block";
-            } finally {
-                withdrawButton.disabled = false;
             }
         }
 
@@ -430,14 +392,14 @@
             }
         }
 
-        function copyReferralLink() {
-            const referralLink = document.getElementById("referralLink").innerText;
-            navigator.clipboard.writeText(referralLink).then(() => {
-                const inviteInfo = document.getElementById("inviteInfo");
-                inviteInfo.innerHTML = `<div class="info-item">Referral link copied to clipboard!</div>`;
-                inviteInfo.style.display = "block";
-                setTimeout(() => inviteInfo.style.display = "none", 2000);
-            });
+        function setupEventListeners() {
+            if (!contract || !accounts) return;
+            contract.events.ReferralAdded({ filter: { user: accounts[0] } })
+                .on('data', () => updateUI())
+                .on('error', console.error);
+            contract.events.NodeAdded({ filter: { node: accounts[0] } })
+                .on('data', () => updateUI())
+                .on('error', console.error);
         }
 
         document.getElementById('connectButton').addEventListener('click', connectWallet);
@@ -446,7 +408,6 @@
         document.getElementById('checkUserInfo').addEventListener('click', viewUserInfo);
         document.getElementById('checkStakeInfo').addEventListener('click', viewStakeInfo);
         document.getElementById('checkContractStats').addEventListener('click', viewContractStats);
-        document.getElementById('refreshButton').addEventListener('click', refreshAllData);
 
         window.ethereum?.on('chainChanged', (chainId) => {
             if (parseInt(chainId, 16) !== 157) {
