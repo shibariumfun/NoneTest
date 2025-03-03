@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -32,6 +33,8 @@
         .percentage-buttons { display: flex; justify-content: center; gap: 10px; margin: 10px 0; }
         .percentage-btn { background-color: #ff9100; color: #ffffff; padding: 8px 15px; font-size: 1em; min-width: 0; }
         .percentage-btn:hover { background-color: #e68a00; }
+        #refreshButton { position: fixed; top: 50%; right: 20px; transform: translateY(-50%); background-color: #ff9100; color: #ffffff; padding: 15px; border-radius: 50%; font-size: 1em; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        #refreshButton:hover { background-color: #e68a00; }
         @media (max-width: 600px) {
             body { align-items: flex-start; padding-top: 10px; }
             .container { width: 100%; padding: 15px; margin: 0; border-radius: 0; min-height: 90vh; box-shadow: none; }
@@ -45,6 +48,7 @@
             .intro-item { padding: 6px; margin: 6px 0; }
             .referral-path { font-size: 0.75em; }
             .percentage-btn { padding: 6px 10px; font-size: 0.9em; }
+            #refreshButton { right: 10px; width: 50px; height: 50px; padding: 10px; }
         }
         @media (min-width: 601px) and (max-width: 900px) {
             .container { padding: 30px; }
@@ -134,6 +138,7 @@
             <div id="contractStats"></div>
         </div>
     </div>
+    <button id="refreshButton">Refresh</button>
     <footer>Powered by Shibarium Memecoin © 2025</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/web3@1.7.0/dist/web3.min.js"></script>
@@ -141,63 +146,72 @@
         let web3, accounts, contract;
         const contractAddress = "0xf2432BE4078B1fA402194aaB4CD662C5B79a46e9";
         const contractABI = [{"inputs":[],"stateMutability":"payable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":true,"internalType":"address","name":"spender","type":"address"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"Approval","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"BoneRewardPending","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"BoneRewardsLocked","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"BoneWithdrawn","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"BoneCollectedUpdated","type":"event"},{"anonymous":false,"inputs":[],"name":"MiningEnded","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"NoneBurned","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"newValue","type":"uint256"}],"name":"NonePerBlockUpdated","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"node","type":"address"}],"name":"NodeAdded","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"previousOwner","type":"address"},{"indexed":true,"internalType":"address","name":"newOwner","type":"address"}],"name":"OwnershipTransferred","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":true,"internalType":"address","name":"referrer","type":"address"}],"name":"ReferralAdded","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":false,"internalType":"uint256","name":"totalAmount","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"nodeAmount","type":"uint256"}],"name":"RewardsClaimed","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":false,"internalType":"uint256","name":"nodeId","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"Staked","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":false,"internalType":"uint256","name":"nodeId","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"StakeWithdrawn","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"from","type":"address"},{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"Transfer","type":"event"},{"inputs":[],"name":"BONE_PAYMENT","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"INITIAL_MINING_REWARD","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"INITIAL_STAKE_REWARD","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"MAX_BONE_REWARDS","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"MAX_NODES","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"MAX_SUPPLY","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"MIN_MINING_REWARD","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"MIN_STAKE_REWARD","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"MIN_STAKE_UNIT","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"NODE_PAYMENT","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"REFERRAL_BONUS_PERCENTAGE","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"approve","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"becomeNode","outputs":[],"stateMutability":"payable","type":"function"},{"inputs":[],"name":"boneCollected","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"burn","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"decimals","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"subtractedValue","type":"uint256"}],"name":"decreaseAllowance","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"getContractStats","outputs":[{"internalType":"uint256","name":"boneBalance","type":"uint256"},{"internalType":"uint256","name":"noneTotalSupply","type":"uint256"},{"internalType":"uint256","name":"blockReward","type":"uint256"},{"internalType":"uint256","name":"contractNone","type":"uint256"},{"internalType":"bool","name":"miningEndedStatus","type":"bool"},{"internalType":"uint256","name":"nodesCount","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"nodeId","type":"uint256"}],"name":"getNodeStakes","outputs":[{"internalType":"uint256","name":"stakesTotal","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"getReductionProgress","outputs":[{"internalType":"uint256","name":"reductionsDone","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getReferralInfo","outputs":[{"internalType":"uint256","name":"count","type":"uint256"},{"internalType":"uint256","name":"reward","type":"uint256"},{"internalType":"address","name":"referrer","type":"address"},{"internalType":"address[10]","name":"path","type":"address[10]"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getRewardInfo","outputs":[{"internalType":"uint256","name":"perBlock","type":"uint256"},{"internalType":"uint256","name":"pendingBone","type":"uint256"},{"internalType":"uint256","name":"totalBone","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getStakeInfo","outputs":[{"internalType":"uint256","name":"amount","type":"uint256"},{"internalType":"uint256","name":"nodeId","type":"uint256"},{"internalType":"uint256","name":"lastBlock","type":"uint256"},{"internalType":"uint256","name":"stakeReward","type":"uint256"},{"internalType":"uint256","name":"nodeReward","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"getStakingStats","outputs":[{"internalType":"uint256","name":"totalStakedAmount","type":"uint256"},{"internalType":"uint256","name":"totalNodeRewardsAmount","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getUserStatus","outputs":[{"internalType":"bool","name":"joined","type":"bool"},{"internalType":"bool","name":"paidBone","type":"bool"},{"internalType":"bool","name":"nodeStatus","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"hasJoined","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"hasPaidBone","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"addedValue","type":"uint256"}],"name":"increaseAllowance","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"isNode","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"referrer","type":"address"},{"internalType":"address","name":"user","type":"address"}],"name":"isReferral","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"isUserNode","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"_referrer","type":"address"}],"name":"joinWithReferrer","outputs":[],"stateMutability":"payable","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"lastWithdrawalBlock","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"miningEnded","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"name","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"nodeCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"nodeAddresses","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"nodeTotalStakes","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"nonePerBlock","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"pendingBoneRewards","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"referralCounts","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"},{"internalType":"uint256","name":"","type":"uint256"}],"name":"referralPath","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"referrers","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"nodeId","type":"uint256"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"stakeToNode","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"startBlock","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"stakedAmount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"symbol","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"spender","type":"address"}],"name":"allowance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"transfer","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"from","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"transferFrom","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"lastUpdateBlock","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"totalBoneRewards","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"totalMinedAmount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"totalMinedBlocks","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"totalNodeRewards","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"totalStaked","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"totalSupply","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"userInfo","outputs":[{"internalType":"uint256","name":"principal","type":"uint256"},{"internalType":"uint256","name":"lastRewardBlock","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"userNodeStake","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"withdrawAllBone","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"withdrawBoneWithReserve","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"withdrawStake","outputs":[],"stateMutability":"nonpayable","type":"function"}];
-        const shibariumTestnet = { chainId: "0x9d", chainName: "Shibarium Puppynet", nativeCurrency: { name: "BONE", symbol: "BONE", decimals: 18 }, rpcUrls: ["https://puppynet.shibrpc.com"], blockExplorerUrls: ["https://puppyscan.shib.io"] };
 
         async function connectWallet() {
             const status = document.getElementById('networkStatus');
             const connectButton = document.getElementById('connectButton');
             try {
-                if (!window.ethereum) throw new Error("No wallet detected. Install MetaMask.");
+                if (!window.ethereum) {
+                    status.innerHTML = 'No wallet detected. Please install <a href="https://metamask.io" target="_blank">MetaMask</a> and run via a local server (e.g., "npx serve").';
+                    throw new Error("No wallet detected");
+                }
                 connectButton.classList.add('loading');
                 status.innerText = "Connecting...";
                 web3 = new Web3(window.ethereum);
                 accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                if (!accounts.length) throw new Error("Please unlock your wallet.");
+                if (!accounts.length) {
+                    throw new Error("Please unlock your wallet or connect it.");
+                }
                 const chainId = await web3.eth.getChainId();
-                if (chainId !== 157) await switchToShibarium();
+                if (chainId !== 157) {
+                    try {
+                        await window.ethereum.request({
+                            method: 'wallet_switchEthereumChain',
+                            params: [{ chainId: "0x9d" }]
+                        });
+                    } catch (switchError) {
+                        if (switchError.code === 4902) {
+                            await window.ethereum.request({
+                                method: 'wallet_addEthereumChain',
+                                params: [shibariumTestnet]
+                            });
+                        } else {
+                            throw switchError;
+                        }
+                    }
+                }
                 document.getElementById('walletAddress').innerText = `${accounts[0].slice(0, 6)}...${accounts[0].slice(-4)}`;
                 contract = new web3.eth.Contract(contractABI, contractAddress);
                 status.innerText = "Connected to Shibarium Puppynet";
-                updateUI();
-                setupEventListeners();
+                updateNoneBalance();
             } catch (error) {
+                console.error(error);
                 status.innerText = "Failed to connect: " + error.message;
             } finally {
                 connectButton.classList.remove('loading');
             }
         }
 
-        async function switchToShibarium() {
-            try {
-                await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: "0x9d" }] });
-            } catch (switchError) {
-                if (switchError.code === 4902) {
-                    await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [shibariumTestnet] });
-                } else {
-                    throw switchError;
-                }
+        async function refreshAllData() {
+            if (!web3 || !contract || !accounts) {
+                alert("Please connect MetaMask first!");
+                return;
             }
-        }
-
-        async function updateUI() {
-            if (!web3 || !contract || !accounts) return;
             updateJoinSection();
             updateNodeSection();
             updateNoneBalance();
         }
 
         async function updateJoinSection() {
-            if (!contract || !accounts) return;
             const [, hasPaidBone] = await contract.methods.getUserStatus(accounts[0]).call();
-            const joinSection = document.getElementById('joinSection');
             if (hasPaidBone) {
-                joinSection.innerHTML = `
+                document.getElementById('joinSection').innerHTML = `
                     <div class="section-title">Invite to Join</div>
                     <div class="intro-item">Whitelist User - You have already joined the network.</div>
                     <div id="inviteInfo"></div>
                 `;
             } else {
-                joinSection.innerHTML = `
+                document.getElementById('joinSection').innerHTML = `
                     <div class="section-title">Invite to Join</div>
                     <div class="intro-item">Pay 10 BONE and provide a referrer address to join and earn NONE rewards. Invite others to get 10% bonus per referral + tiered BONE rewards (up to 1.5 BONE for direct referrals).</div>
                     <div class="button-group" id="joinButtonGroup">
@@ -208,31 +222,27 @@
                     </div>
                     <div id="inviteInfo"></div>
                 `;
-                document.getElementById('joinWithReferrerButton').removeEventListener('click', joinWithReferrer);
                 document.getElementById('joinWithReferrerButton').addEventListener('click', joinWithReferrer);
             }
         }
 
         async function updateNodeSection() {
-            if (!contract || !accounts) return;
             const [, , isNode] = await contract.methods.getUserStatus(accounts[0]).call();
-            const nodeSection = document.getElementById('nodeSection');
             if (isNode) {
                 let nodeId = 0;
-                const nodeCount = await contract.methods.nodeCount().call();
-                for (let i = 1; i <= nodeCount; i++) {
+                for (let i = 1; i <= await contract.methods.nodeCount().call(); i++) {
                     if ((await contract.methods.nodeAddresses(i).call()).toLowerCase() === accounts[0].toLowerCase()) {
                         nodeId = i;
                         break;
                     }
                 }
-                nodeSection.innerHTML = `
+                document.getElementById('nodeSection').innerHTML = `
                     <div class="section-title">Node</div>
                     <div class="intro-item">My Node ID: ${nodeId}</div>
                     <div id="nodeInfo"></div>
                 `;
             } else {
-                nodeSection.innerHTML = `
+                document.getElementById('nodeSection').innerHTML = `
                     <div class="section-title">Node</div>
                     <div class="intro-item">Pay 1000 BONE to become a node (max 2100 nodes). Nodes earn 10% of stakers' rewards. Limited slots available!</div>
                     <div class="button-group" id="nodeButtonGroup">
@@ -240,38 +250,44 @@
                     </div>
                     <div id="nodeInfo"></div>
                 `;
-                document.getElementById('becomeNodeButton').removeEventListener('click', becomeNode);
                 document.getElementById('becomeNodeButton').addEventListener('click', becomeNode);
             }
         }
 
         async function joinWithReferrer() {
-            if (!web3 || !contract || !accounts) return alert("Please connect MetaMask first!");
+            if (!web3 || !contract || !accounts) {
+                alert("Please connect MetaMask first!");
+                return;
+            }
             const referrer = document.getElementById("referrerInput").value;
-            if (!referrer) return alert("Referrer address is required!");
-            const inviteInfo = document.getElementById("inviteInfo");
+            if (!referrer) {
+                alert("Referrer address is required!");
+                return;
+            }
             try {
-                inviteInfo.innerHTML = `<div class="info-item">Processing payment...</div>`;
-                inviteInfo.style.display = "block";
                 await contract.methods.joinWithReferrer(referrer).send({ from: accounts[0], value: web3.utils.toWei("10", "ether") });
-                inviteInfo.innerHTML = `<div class="info-item">Joined successfully! You can now earn NONE rewards and invite others for BONE bonuses.</div>`;
-                updateUI();
+                document.getElementById("inviteInfo").innerHTML = `<div class="info-item">Joined successfully! You can now earn NONE rewards and invite others for BONE bonuses.</div>`;
+                document.getElementById("inviteInfo").style.display = "block";
+                refreshAllData();
             } catch (error) {
-                inviteInfo.innerHTML = `<div class="info-item">Failed: ${error.message}</div>`;
+                document.getElementById("inviteInfo").innerHTML = `<div class="info-item">Failed: ${error.message}</div>`;
+                document.getElementById("inviteInfo").style.display = "block";
             }
         }
 
         async function becomeNode() {
-            if (!web3 || !contract || !accounts) return alert("Please connect MetaMask first!");
-            const nodeInfo = document.getElementById("nodeInfo");
+            if (!web3 || !contract || !accounts) {
+                alert("Please connect MetaMask first!");
+                return;
+            }
             try {
-                nodeInfo.innerHTML = `<div class="info-item">Processing payment...</div>`;
-                nodeInfo.style.display = "block";
                 await contract.methods.becomeNode().send({ from: accounts[0], value: web3.utils.toWei("1000", "ether") });
-                nodeInfo.innerHTML = `<div class="info-item">You're now a node! Earn 10% of stakers' rewards.</div>`;
-                updateUI();
+                document.getElementById("nodeInfo").innerHTML = `<div class="info-item">You're now a node! Earn 10% of stakers' rewards.</div>`;
+                document.getElementById("nodeInfo").style.display = "block";
+                refreshAllData();
             } catch (error) {
-                nodeInfo.innerHTML = `<div class="info-item">Failed: ${error.message}</div>`;
+                document.getElementById("nodeInfo").innerHTML = `<div class="info-item">Failed: ${error.message}</div>`;
+                document.getElementById("nodeInfo").style.display = "block";
             }
         }
 
@@ -282,136 +298,180 @@
         }
 
         function setStakePercentage(percentage) {
-            if (!web3 || !contract || !accounts) return alert("Please connect MetaMask first!");
+            if (!web3 || !contract || !accounts) {
+                alert("Please connect MetaMask first!");
+                return;
+            }
             updateNoneBalance().then(() => {
                 const balanceText = document.getElementById('noneBalance').innerText.split(': ')[1].split(' ')[0];
                 const balance = parseFloat(balanceText);
                 const minUnit = 10000;
                 const maxUnits = Math.floor(balance / minUnit);
-                document.getElementById('stakeAmountInput').value = maxUnits < 1 ? 0 : Math.floor(maxUnits * percentage / 100) * minUnit;
+                if (maxUnits < 1) {
+                    document.getElementById('stakeAmountInput').value = 0;
+                } else {
+                    const units = Math.floor(maxUnits * percentage / 100);
+                    document.getElementById('stakeAmountInput').value = units * minUnit;
+                }
             });
         }
 
         async function stakeToNode() {
-            if (!web3 || !contract || !accounts) return alert("Please connect MetaMask first!");
+            if (!web3 || !contract || !accounts) {
+                alert("Please connect MetaMask first!");
+                return;
+            }
             const nodeId = document.getElementById("nodeIdInput").value;
             const amount = document.getElementById("stakeAmountInput").value;
-            const nodeStakeInfo = document.getElementById("nodeStakeInfo");
             try {
                 await contract.methods.stakeToNode(nodeId, web3.utils.toWei(amount, "ether")).send({ from: accounts[0] });
-                nodeStakeInfo.innerHTML = `<div class="info-item">Staked ${amount} NONE to Node ${nodeId}! Earn staking rewards now.</div>`;
-                nodeStakeInfo.style.display = "block";
+                document.getElementById("nodeStakeInfo").innerHTML = `<div class="info-item">Staked ${amount} NONE to Node ${nodeId}! Earn staking rewards now.</div>`;
+                document.getElementById("nodeStakeInfo").style.display = "block";
                 updateNoneBalance();
             } catch (error) {
-                nodeStakeInfo.innerHTML = `<div class="info-item">Failed: ${error.message}</div>`;
-                nodeStakeInfo.style.display = "block";
+                document.getElementById("nodeStakeInfo").innerHTML = `<div class="info-item">Failed: ${error.message}</div>`;
+                document.getElementById("nodeStakeInfo").style.display = "block";
             }
         }
 
         async function withdrawStake() {
-            if (!web3 || !contract || !accounts) return alert("Please connect MetaMask first!");
-            const nodeStakeInfo = document.getElementById("nodeStakeInfo");
+            if (!web3 || !contract || !accounts) {
+                alert("Please connect MetaMask first!");
+                return;
+            }
             try {
                 await contract.methods.withdrawStake().send({ from: accounts[0] });
-                nodeStakeInfo.innerHTML = `<div class="info-item">Stake withdrawn successfully with rewards!</div>`;
-                nodeStakeInfo.style.display = "block";
+                document.getElementById("nodeStakeInfo").innerHTML = `<div class="info-item">Stake withdrawn successfully with rewards!</div>`;
+                document.getElementById("nodeStakeInfo").style.display = "block";
                 updateNoneBalance();
             } catch (error) {
-                nodeStakeInfo.innerHTML = `<div class="info-item">Failed: ${error.message}</div>`;
-                nodeStakeInfo.style.display = "block";
+                document.getElementById("nodeStakeInfo").innerHTML = `<div class="info-item">Failed: ${error.message}</div>`;
+                document.getElementById("nodeStakeInfo").style.display = "block";
             }
         }
 
         async function viewUserInfo() {
-            if (!web3 || !contract || !accounts) return alert("Please connect MetaMask first!");
-            const userInfo = document.getElementById("userInfo");
+            if (!web3 || !contract || !accounts) {
+                alert("Please connect MetaMask first!");
+                return;
+            }
             try {
                 const user = accounts[0];
                 const referralInfo = await contract.methods.getReferralInfo(user).call();
                 const rewardInfo = await contract.methods.getRewardInfo(user).call();
                 const statusInfo = await contract.methods.getUserStatus(user).call();
-                const pathHtml = (Array.isArray(referralInfo[3]) ? referralInfo[3] : []).map(addr => `<div class="referral-path">${addr || "None"}</div>`).join('') || `<div class="referral-path">None</div>`;
-                userInfo.innerHTML = `
+
+                const count = referralInfo[0];
+                const reward = referralInfo[1];
+                const referrer = referralInfo[2];
+                const path = Array.isArray(referralInfo[3]) ? referralInfo[3] : [];
+                const perBlock = rewardInfo[0];
+                const pendingBone = rewardInfo[1];
+                const totalBone = rewardInfo[2];
+                const joined = statusInfo[0];
+                const paidBone = statusInfo[1];
+                const nodeStatus = statusInfo[2];
+
+                let pathHtml = path.map(addr => `<div class="referral-path">${addr || "None"}</div>`).join('');
+                if (!pathHtml) pathHtml = `<div class="referral-path">None</div>`;
+
+                document.getElementById("userInfo").innerHTML = `
                     <div class="info-item"><strong>Your Info</strong></div>
-                    <div class="info-item">Referrals: ${referralInfo[0] || 0}</div>
-                    <div class="info-item">Pending NONE Reward: ${web3.utils.fromWei(referralInfo[1] || "0", "ether")} NONE</div>
-                    <div class="info-item">Referrer: <div class="referral-path">${referralInfo[2] || "None"}</div></div>
+                    <div class="info-item">Referrals: ${count || 0}</div>
+                    <div class="info-item">Pending NONE Reward: ${web3.utils.fromWei(reward || "0", "ether")} NONE</div>
+                    <div class="info-item">Referrer: <div class="referral-path">${referrer || "None"}</div></div>
                     <div class="info-item">Referral Path:${pathHtml}</div>
-                    <div class="info-item">NONE per Block: ${web3.utils.fromWei(rewardInfo[0] || "0", "ether")} NONE</div>
-                    <div class="info-item">Pending BONE: ${web3.utils.fromWei(rewardInfo[1] || "0", "ether")} BONE</div>
-                    <div class="info-item">Total BONE Earned: ${web3.utils.fromWei(rewardInfo[2] || "0", "ether")} BONE</div>
-                    <div class="info-item">Joined: ${statusInfo[0] || false}</div>
-                    <div class="info-item">Paid BONE: ${statusInfo[1] || false}</div>
-                    <div class="info-item">Is Node: ${statusInfo[2] || false}</div>
+                    <div class="info-item">NONE per Block: ${web3.utils.fromWei(perBlock || "0", "ether")} NONE</div>
+                    <div class="info-item">Pending BONE: ${web3.utils.fromWei(pendingBone || "0", "ether")} BONE</div>
+                    <div class="info-item">Total BONE Earned: ${web3.utils.fromWei(totalBone || "0", "ether")} BONE</div>
+                    <div class="info-item">Joined: ${joined || false}</div>
+                    <div class="info-item">Paid BONE: ${paidBone || false}</div>
+                    <div class="info-item">Is Node: ${nodeStatus || false}</div>
                 `;
-                userInfo.style.display = "block";
+                document.getElementById("userInfo").style.display = "block";
             } catch (error) {
-                userInfo.innerHTML = `<div class="info-item">Failed to fetch: ${error.message}</div>`;
-                userInfo.style.display = "block";
+                console.error("View User Info Error:", error);
+                document.getElementById("userInfo").innerHTML = `<div class="info-item">Failed to fetch: ${error.message}</div>`;
+                document.getElementById("userInfo").style.display = "block";
             }
         }
 
         async function viewStakeInfo() {
-            if (!web3 || !contract || !accounts) return alert("Please connect MetaMask first!");
-            const stakeInfo = document.getElementById("stakeInfo");
+            if (!web3 || !contract || !accounts) {
+                alert("Please connect MetaMask first!");
+                return;
+            }
             try {
-                const stakeData = await contract.methods.getStakeInfo(accounts[0]).call();
-                stakeInfo.innerHTML = `
+                const user = accounts[0];
+                const stakeInfo = await contract.methods.getStakeInfo(user).call();
+
+                const amount = stakeInfo[0];
+                const nodeId = stakeInfo[1];
+                const lastBlock = stakeInfo[2];
+                const stakeReward = stakeInfo[3];
+                const nodeReward = stakeInfo[4];
+
+                document.getElementById("stakeInfo").innerHTML = `
                     <div class="info-item"><strong>Staking Info</strong></div>
-                    <div class="info-item">Staked Amount: ${web3.utils.fromWei(stakeData[0] || "0", "ether")} NONE</div>
-                    <div class="info-item">Node ID: ${stakeData[1] || 0}</div>
-                    <div class="info-item">Last Reward Block: ${stakeData[2] || 0}</div>
-                    <div class="info-item">Your Reward: ${web3.utils.fromWei(stakeData[3] || "0", "ether")} NONE</div>
-                    <div class="info-item">Node Share: ${web3.utils.fromWei(stakeData[4] || "0", "ether")} NONE</div>
+                    <div class="info-item">Staked Amount: ${web3.utils.fromWei(amount || "0", "ether")} NONE</div>
+                    <div class="info-item">Node ID: ${nodeId || 0}</div>
+                    <div class="info-item">Last Reward Block: ${lastBlock || 0}</div>
+                    <div class="info-item">Your Reward: ${web3.utils.fromWei(stakeReward || "0", "ether")} NONE</div>
+                    <div class="info-item">Node Share: ${web3.utils.fromWei(nodeReward || "0", "ether")} NONE</div>
                 `;
-                stakeInfo.style.display = "block";
+                document.getElementById("stakeInfo").style.display = "block";
             } catch (error) {
-                stakeInfo.innerHTML = `<div class="info-item">Failed to fetch: ${error.message}</div>`;
-                stakeInfo.style.display = "block";
+                console.error("View Stake Info Error:", error);
+                document.getElementById("stakeInfo").innerHTML = `<div class="info-item">Failed to fetch: ${error.message}</div>`;
+                document.getElementById("stakeInfo").style.display = "block";
             }
         }
 
         async function viewContractStats() {
-            if (!web3 || !contract || !accounts) return alert("Please connect MetaMask first!");
-            const contractStats = document.getElementById("contractStats");
+            if (!web3 || !contract || !accounts) {
+                alert("Please connect MetaMask first!");
+                return;
+            }
             try {
                 const stats = await contract.methods.getContractStats().call();
-                contractStats.innerHTML = `
+
+                const boneBalance = stats[0];
+                const noneTotalSupply = stats[1];
+                const blockReward = stats[2];
+                const contractNone = stats[3];
+                const miningEndedStatus = stats[4];
+                const nodesCount = stats[5];
+
+                document.getElementById("contractStats").innerHTML = `
                     <div class="info-item"><strong>Contract Stats</strong></div>
-                    <div class="info-item">BONE Collected: ${web3.utils.fromWei(stats[0] || "0", "ether")} BONE</div>
-                    <div class="info-item">Total NONE Supply: ${web3.utils.fromWei(stats[1] || "0", "ether")} NONE</div>
-                    <div class="info-item">NONE per Block: ${web3.utils.fromWei(stats[2] || "0", "ether")} NONE</div>
-                    <div class="info-item">Contract NONE: ${web3.utils.fromWei(stats[3] || "0", "ether")} NONE</div>
-                    <div class="info-item">Mining Ended: ${stats[4] || false}</div>
-                    <div class="info-item">Node Count: ${stats[5] || 0}</div>
+                    <div class="info-item">BONE Collected: ${web3.utils.fromWei(boneBalance || "0", "ether")} BONE</div>
+                    <div class="info-item">Total NONE Supply: ${web3.utils.fromWei(noneTotalSupply || "0", "ether")} NONE</div>
+                    <div class="info-item">NONE per Block: ${web3.utils.fromWei(blockReward || "0", "ether")} NONE</div>
+                    <div class="info-item">Contract NONE: ${web3.utils.fromWei(contractNone || "0", "ether")} NONE</div>
+                    <div class="info-item">Mining Ended: ${miningEndedStatus || false}</div>
+                    <div class="info-item">Node Count: ${nodesCount || 0}</div>
                 `;
-                contractStats.style.display = "block";
+                document.getElementById("contractStats").style.display = "block";
             } catch (error) {
-                contractStats.innerHTML = `<div class="info-item">Failed to fetch: ${error.message}</div>`;
-                contractStats.style.display = "block";
+                console.error("View Contract Stats Error:", error);
+                document.getElementById("contractStats").innerHTML = `<div class="info-item">Failed to fetch: ${error.message}</div>`;
+                document.getElementById("contractStats").style.display = "block";
             }
         }
 
-        function setupEventListeners() {
-            if (!contract || !accounts) return;
-            contract.events.ReferralAdded({ filter: { user: accounts[0] } })
-                .on('data', () => updateUI())
-                .on('error', console.error);
-            contract.events.NodeAdded({ filter: { node: accounts[0] } })
-                .on('data', () => updateUI())
-                .on('error', console.error);
-        }
-
         document.getElementById('connectButton').addEventListener('click', connectWallet);
+        document.getElementById('joinWithReferrerButton').addEventListener('click', joinWithReferrer);
+        document.getElementById('becomeNodeButton').addEventListener('click', becomeNode);
         document.getElementById('stakeButton').addEventListener('click', stakeToNode);
         document.getElementById('withdrawStakeButton').addEventListener('click', withdrawStake);
         document.getElementById('checkUserInfo').addEventListener('click', viewUserInfo);
         document.getElementById('checkStakeInfo').addEventListener('click', viewStakeInfo);
         document.getElementById('checkContractStats').addEventListener('click', viewContractStats);
+        document.getElementById('refreshButton').addEventListener('click', refreshAllData);
 
         window.ethereum?.on('chainChanged', (chainId) => {
             if (parseInt(chainId, 16) !== 157) {
-                document.getElementById('networkStatus').innerText = "Switched to wrong network. Please reconnect.";
+                document.getElementById('networkStatus').innerText = "Switched to wrong network. Please reconnect to Shibarium Puppynet.";
                 web3 = null;
                 contract = null;
                 accounts = null;
@@ -435,9 +495,9 @@
 
         window.addEventListener('load', () => {
             if (!window.location.protocol.startsWith('http')) {
-                document.getElementById('networkStatus').innerHTML = 'Please run via a local server (e.g., "npx serve").';
+                document.getElementById('networkStatus').innerHTML = 'Please run this page via a local server (e.g., "npx serve") to connect MetaMask.';
             } else if (!window.ethereum) {
-                document.getElementById('networkStatus').innerHTML = 'No wallet detected. Install <a href="https://metamask.io" target="_blank">MetaMask</a>.';
+                document.getElementById('networkStatus').innerHTML = 'No wallet detected. Please install <a href="https://metamask.io" target="_blank">MetaMask</a>.';
             }
         });
     </script>
